@@ -17,18 +17,9 @@ Full license text: [LICENSE_DRL_1.1](LICENSE_DRL_1.1)
 
 The following signature files have been integrated from Neo23x0/signature-base:
 
-#### 1. Import Hash Detection (Priority 1 - CRITICAL)
-- **RetDec Location:** `/mnt/dev/retdec/support/yara_patterns/tools/pe/imphash_detection.yar`
-- **Original Source:** `yara/gen_imphash_detection.yar`
-- **Lines:** 329
-- **Impact:** Detects 75+ malware families by import hash signature
-- **Rules Included:**
-  - `MAL_Malware_Imphash_Mar23_1` - Detects malware by known bad imphash (75 score)
-  - `HKTL_Imphashes_Aug22_1` - Detects hacktools: Mimikatz, PetitPotam, Cobalt Strike, NanoDump, UACMe Akagi, and others (80 score)
-  - `SUSP_Imphash_Mar23_2` - Detects suspicious imphashes with zero VT hits (65 score)
-  - `SUSP_Imphash_Mar23_3` - Detects imphashes with 99.75% malicious hit rate (45 score)
+**Note:** Import hash detection rules were excluded because RetDec's YARA is compiled without OpenSSL/crypto support (required for imphash calculation).
 
-#### 2. File Anomaly Detection (Priority 1)
+#### 1. File Anomaly Detection (Priority 1)
 - **RetDec Location:** `/mnt/dev/retdec/support/yara_patterns/tools/anomaly_detection.yar`
 - **Original Source:** `yara/gen_file_anomalies.yar`
 - **Lines:** 84
@@ -38,7 +29,7 @@ The following signature files have been integrated from Neo23x0/signature-base:
   - `SUSP_GIF_Anomalies` - Detects GIF files with format anomalies indicating obfuscation (60 score)
   - `SUSP_HxD_Icon_Anomaly_May23_1` - Detects suspicious use of HxD hex editor icon in malware (65 score)
 
-#### 3. Modern Packers Detection (Priority 1)
+#### 2. Modern Packers Detection (Priority 1)
 - **RetDec Location:** `/mnt/dev/retdec/support/yara_patterns/tools/pe/modern_packers.yar`
 - **Original Sources:**
   - `yara/gen_enigma_protector.yar` (55 lines)
@@ -53,35 +44,22 @@ The following signature files have been integrated from Neo23x0/signature-base:
 
 ### Total Integration Statistics
 
-- **Total Files Integrated:** 4 signature files
-- **Total Lines of Code:** 493 lines
-- **Total YARA Rules Added:** 11 rules
-- **Expected Detection Improvement:** 15-25% increase in malware detection capability
+- **Total Files Integrated:** 2 signature files
+- **Total Lines of Code:** 175 lines
+- **Total YARA Rules Added:** 7 rules
+- **Expected Detection Improvement:** 10-15% increase in modern threat detection capability
 
 ### Rule Categories
 
 The integrated rules provide detection across multiple categories:
 
-1. **Malware Families (Import Hash Based):**
-   - 75+ malware families via imphash signatures
-   - Covers various threat actors and campaigns
-
-2. **Hacking Tools:**
-   - Mimikatz (credential dumping)
-   - Cobalt Strike beacons
-   - PetitPotam, JuicyPotato, RoguePotato (privilege escalation)
-   - NanoDump, Dumpert (memory dumping)
-   - UACMe Akagi (UAC bypass)
-   - WCE, Pwdump (password extraction)
-   - Sliver Stagers
-
-3. **Packers & Obfuscation:**
+1. **Packers & Obfuscation:**
    - Enigma Protector (commercial packer)
    - LockBit 4.0 custom packer
    - Tiny PE files
    - File format anomalies
 
-4. **File Anomalies:**
+2. **File Anomalies:**
    - Obfuscated GIF files
    - Suspicious use of legitimate software icons
    - Structural manipulation detection
@@ -123,8 +101,8 @@ These signatures are automatically loaded by RetDec's YARA pattern matching engi
 ### Maintenance Notes
 
 - **Update Policy:** Periodic updates from signature-base repository recommended
-- **Compatibility:** All rules tested with PE module support
-- **Performance:** Imphash rules require PE module, optimized for header-only scanning
+- **Compatibility:** All rules tested with YARA 4.5.5 and RetDec PE module support
+- **Limitation:** Import hash detection rules excluded (require OpenSSL/crypto support in YARA)
 - **False Positives:** Rules include false positive filters where applicable
 
 ---
