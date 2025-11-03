@@ -1,10 +1,10 @@
 
 set(CAPSTONE_URL
-    "https://github.com/capstone-engine/capstone/archive/refs/tags/5.0-rc2.zip"
+    "https://github.com/capstone-engine/capstone/archive/refs/tags/5.0.6.zip"
     CACHE STRING "URL of Capstone archive to use."
 )
 set(CAPSTONE_ARCHIVE_SHA256
-    "c47acdabb9ba4922a6d68b96eb7e14a431bfef7d7c57cea1e5881f87776228b2"
+    "3b3bdad8a75c4a9cbec28efd47778e412904db1588ec606d516b7196e8e6668e"
     CACHE STRING ""
 )
 
@@ -36,11 +36,11 @@ set(LLVM_ARCHIVE_SHA256
 )
 
 set(YARA_URL
-    "https://github.com/VirusTotal/yara/archive/v4.2.0-rc1.zip"
+    "https://github.com/VirusTotal/yara/archive/refs/tags/v4.5.5.zip"
     CACHE STRING "URL of Yara archive to use."
 )
 set(YARA_ARCHIVE_SHA256
-    "ae1adad2ae33106f4c296cef32ddba2c93867010ef853028d30cad42548d0474"
+    "6f0e1cf11c435fba465a96aa5e17477258ab6d60ea3efb361d82478fe9c2536e"
     CACHE STRING ""
 )
 
