@@ -1,0 +1,23 @@
+# Dependabot configuration for RetDec
+# Automatically checks for updates to dependencies and GitHub Actions
+
+version: 2
+updates:
+  # Monitor GitHub Actions for updates
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+      - "github-actions"
+    commit-message:
+      prefix: "ci"
+      include: "scope"
+
+  # Monitor CMake dependencies (if using FetchContent in future)
+  # Note: Dependabot doesn't directly support CMake ExternalProject
+  # Manual monitoring still required for external dependencies

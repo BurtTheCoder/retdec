@@ -1,0 +1,62 @@
+## Code Quality Checks for RetDec
+
+name: Code Quality
+
+on:
+  pull_request:
+    branches:
+      - master
+  push:
+    branches:
+      - master
+      - 'test-*'
+
+jobs:
+  clang-format-check:
+    name: Check Code Formatting
+    runs-on: ubuntu-22.04
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install clang-format
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang-format-14
+
+      - name: Check C++ code formatting
+        run: |
+          # Find all C++ source and header files
+          FILES=$(find src include tests -type f \( -name '*.cpp' -o -name '*.h' -o -name '*.hpp' -o -name '*.c' \) 2>/dev/null || true)
+
+          if [ -z "$FILES" ]; then
+            echo "No C++ files found to check"
+            exit 0
+          fi
+
+          # Check formatting (dry-run)
+          echo "Checking code formatting..."
+          FORMAT_ISSUES=0
+
+          for file in $FILES; do
+            if ! clang-format-14 --dry-run --Werror "$file" 2>&1; then
+              echo "❌ Formatting issue in: $file"
+              FORMAT_ISSUES=$((FORMAT_ISSUES + 1))
+            fi
+          done
+
+          if [ $FORMAT_ISSUES -gt 0 ]; then
+            echo ""
+            echo "❌ Found $FORMAT_ISSUES file(s) with formatting issues"
+            echo ""
+            echo "To fix formatting issues, run:"
+            echo "  find src include tests -type f \( -name '*.cpp' -o -name '*.h' \) -exec clang-format-14 -i {} \;"
+            exit 1
+          else
+            echo "✅ All files are properly formatted"
+          fi
+
+      - name: Format Check Summary
+        if: failure()
+        run: |
+          echo "::error::Code formatting check failed. Please format your code using clang-format-14"

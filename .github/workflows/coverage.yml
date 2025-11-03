@@ -1,0 +1,111 @@
+## Code Coverage Analysis for RetDec
+
+name: Code Coverage
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  coverage:
+    name: Generate Code Coverage Report
+    runs-on: ubuntu-22.04
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            cmake \
+            build-essential \
+            gcc-multilib \
+            libssl-dev \
+            python3 \
+            python3-pip \
+            autoconf \
+            automake \
+            libtool \
+            pkg-config \
+            m4 \
+            zlib1g-dev \
+            lcov
+
+      - name: Configure CMake with Coverage
+        run: |
+          mkdir build
+          cd build
+          cmake .. \
+            -DCMAKE_BUILD_TYPE=Debug \
+            -DRETDEC_TESTS=ON \
+            -DCMAKE_CXX_FLAGS="--coverage -fprofile-arcs -ftest-coverage" \
+            -DCMAKE_C_FLAGS="--coverage -fprofile-arcs -ftest-coverage" \
+            -DCMAKE_EXE_LINKER_FLAGS="--coverage" \
+            -DCMAKE_INSTALL_PREFIX=install
+
+      - name: Build RetDec with Coverage
+        run: |
+          cd build
+          make -j$(nproc)
+
+      - name: Run Unit Tests
+        run: |
+          cd build
+          ctest --output-on-failure || true
+
+      - name: Generate Coverage Data
+        run: |
+          cd build
+
+          # Capture coverage info
+          lcov --directory . --capture --output-file coverage.info
+
+          # Filter out system headers and test files
+          lcov --remove coverage.info \
+            '/usr/*' \
+            '*/deps/*' \
+            '*/tests/*' \
+            '*/build/*' \
+            --output-file coverage_filtered.info
+
+          # Generate summary
+          lcov --list coverage_filtered.info
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          files: ./build/coverage_filtered.info
+          flags: unittests
+          name: retdec-coverage
+          fail_ci_if_error: false
+          verbose: true
+          token: ${{ secrets.CODECOV_TOKEN }}
+
+      - name: Generate HTML Coverage Report
+        run: |
+          cd build
+          genhtml coverage_filtered.info \
+            --output-directory coverage_html \
+            --title "RetDec Code Coverage" \
+            --legend \
+            --show-details
+
+      - name: Upload HTML Coverage Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: build/coverage_html
+
+      - name: Coverage Summary
+        run: |
+          cd build
+          echo "## Coverage Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          lcov --summary coverage_filtered.info >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY

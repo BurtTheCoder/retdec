@@ -1,0 +1,108 @@
+## Static Analysis with clang-tidy for RetDec
+
+name: Static Analysis
+
+on:
+  pull_request:
+    branches:
+      - master
+  push:
+    branches:
+      - master
+      - 'test-*'
+
+jobs:
+  clang-tidy:
+    name: clang-tidy Analysis
+    runs-on: ubuntu-22.04
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            clang-14 \
+            clang-tidy-14 \
+            cmake \
+            build-essential \
+            libssl-dev \
+            python3 \
+            autoconf \
+            automake \
+            libtool \
+            pkg-config \
+            m4 \
+            zlib1g-dev
+
+      - name: Configure CMake
+        run: |
+          mkdir -p build
+          cd build
+          cmake .. \
+            -DCMAKE_BUILD_TYPE=Debug \
+            -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
+            -DCMAKE_C_COMPILER=clang-14 \
+            -DCMAKE_CXX_COMPILER=clang++-14 \
+            -DRETDEC_TESTS=OFF
+
+      - name: Run clang-tidy on changed files
+        if: github.event_name == 'pull_request'
+        run: |
+          # Get list of changed C++ files
+          git fetch origin ${{ github.base_ref }}
+          CHANGED_FILES=$(git diff --name-only origin/${{ github.base_ref }}...HEAD | grep -E '\.(cpp|cc|cxx|c|h|hpp)$' || true)
+
+          if [ -z "$CHANGED_FILES" ]; then
+            echo "No C++ files changed in this PR"
+            exit 0
+          fi
+
+          echo "Running clang-tidy on changed files:"
+          echo "$CHANGED_FILES"
+
+          # Run clang-tidy on changed files
+          cd build
+          ISSUES=0
+          for file in $CHANGED_FILES; do
+            if [ -f "../$file" ]; then
+              echo "Analyzing: $file"
+              if ! clang-tidy-14 -p . "../$file" 2>&1 | tee -a clang-tidy.log; then
+                ISSUES=$((ISSUES + 1))
+              fi
+            fi
+          done
+
+          if [ $ISSUES -gt 0 ]; then
+            echo "::warning::Found potential issues in $ISSUES file(s). Review the analysis output above."
+          fi
+
+      - name: Run clang-tidy on sample files (push to master)
+        if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+        run: |
+          # Run on a sample of important files to keep analysis fast
+          cd build
+
+          SAMPLE_FILES="
+            ../src/bin2llvmir/providers/abi/abi.cpp
+            ../src/llvmir2hll/ir/module.cpp
+            ../src/fileformat/file_format/file_format.cpp
+            ../include/retdec/common/function.h
+          "
+
+          echo "Running clang-tidy on sample files..."
+          for file in $SAMPLE_FILES; do
+            if [ -f "$file" ]; then
+              echo "Analyzing: $file"
+              clang-tidy-14 -p . "$file" 2>&1 | tee -a clang-tidy.log || true
+            fi
+          done
+
+      - name: Upload analysis results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: clang-tidy-results
+          path: build/clang-tidy.log
+          if-no-files-found: ignore
