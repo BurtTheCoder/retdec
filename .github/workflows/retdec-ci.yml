@@ -52,6 +52,17 @@ jobs:
         run: bash "${WORKFLOWS_DIR}/${RUNNER_OS}/install-deps.sh"
         shell: bash
 
+      - name: Install Autotools (Required for YARA)
+        if: runner.os == 'Linux' || runner.os == 'macOS'
+        run: |
+          if [ "$RUNNER_OS" == "Linux" ]; then
+            sudo apt-get update
+            sudo apt-get install -y autoconf automake libtool pkg-config
+          elif [ "$RUNNER_OS" == "macOS" ]; then
+            brew install autoconf automake libtool pkg-config
+          fi
+        shell: bash
+
       - name: Windows Additional Packages
         if: runner.os == 'Windows'
         run: |
@@ -68,6 +79,18 @@ jobs:
           # Clang will be available in build/clang
           CLANG_DIR_OUT: clang
         shell: bash
+
+      - name: Cache CMake Build and Dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            build/deps/install
+            build/external
+            ~/.ccache
+          key: ${{ runner.os }}-${{ matrix.type }}-cmake-${{ hashFiles('**/CMakeLists.txt', 'cmake/**', 'deps/**') }}
+          restore-keys: |
+            ${{ runner.os }}-${{ matrix.type }}-cmake-
+            ${{ runner.os }}-cmake-
 
       - name: Build RetDec
         run: bash "${WORKFLOWS_DIR}/${RUNNER_OS}/build.sh"
@@ -107,6 +130,7 @@ jobs:
         with:
           name: RetDec-${{ runner.os }}-Release
           path: install
+          retention-days: 90  # Keep release artifacts for 90 days
 
   docs-build:
     name: doxygen-build (Linux)
@@ -147,3 +171,4 @@ jobs:
         with:
           name: RetDec-Documentation
           path: build/doc/doxygen/html
+          retention-days: 30  # Keep documentation for 30 days

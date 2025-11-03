@@ -185,6 +185,12 @@ cond_add_subdirectory(doc RETDEC_DOC)
 add_subdirectory(scripts)
 add_subdirectory(src)
 add_subdirectory(support)
+
+# Enable CTest for test discovery
+if(RETDEC_TESTS)
+	enable_testing()
+endif()
+
 add_subdirectory(tests)
 
 # Create config version file.

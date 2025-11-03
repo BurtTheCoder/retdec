@@ -23,8 +23,8 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y \
-            clang-14 \
-            clang-tidy-14 \
+            clang-18 \
+            clang-tidy-18 \
             cmake \
             build-essential \
             libssl-dev \
@@ -43,8 +43,8 @@ jobs:
           cmake .. \
             -DCMAKE_BUILD_TYPE=Debug \
             -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
-            -DCMAKE_C_COMPILER=clang-14 \
-            -DCMAKE_CXX_COMPILER=clang++-14 \
+            -DCMAKE_C_COMPILER=clang-18 \
+            -DCMAKE_CXX_COMPILER=clang++-18 \
             -DRETDEC_TESTS=OFF
 
       - name: Run clang-tidy on changed files
@@ -69,7 +69,7 @@ jobs:
             if [ -f "../$file" ]; then
               echo "Analyzing: $file"
               # Run clang-tidy but don't fail on warnings (|| true)
-              clang-tidy-14 -p . "../$file" 2>&1 | tee -a clang-tidy.log || true
+              clang-tidy-18 -p . "../$file" 2>&1 | tee -a clang-tidy.log || true
               # Count as issue only for documentation purposes
               ISSUES=$((ISSUES + 1))
             fi
@@ -97,7 +97,7 @@ jobs:
           for file in $SAMPLE_FILES; do
             if [ -f "$file" ]; then
               echo "Analyzing: $file"
-              clang-tidy-14 -p . "$file" 2>&1 | tee -a clang-tidy.log || true
+              clang-tidy-18 -p . "$file" 2>&1 | tee -a clang-tidy.log || true
             fi
           done
 
@@ -108,3 +108,4 @@ jobs:
           name: clang-tidy-results
           path: build/clang-tidy.log
           if-no-files-found: ignore
+          retention-days: 14  # Keep analysis results for 14 days
