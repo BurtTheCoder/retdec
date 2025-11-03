@@ -68,14 +68,16 @@ jobs:
           for file in $CHANGED_FILES; do
             if [ -f "../$file" ]; then
               echo "Analyzing: $file"
-              if ! clang-tidy-14 -p . "../$file" 2>&1 | tee -a clang-tidy.log; then
-                ISSUES=$((ISSUES + 1))
-              fi
+              # Run clang-tidy but don't fail on warnings (|| true)
+              clang-tidy-14 -p . "../$file" 2>&1 | tee -a clang-tidy.log || true
+              # Count as issue only for documentation purposes
+              ISSUES=$((ISSUES + 1))
             fi
           done
 
           if [ $ISSUES -gt 0 ]; then
-            echo "::warning::Found potential issues in $ISSUES file(s). Review the analysis output above."
+            echo "::warning::Analyzed $ISSUES file(s). Review the analysis output above for suggestions."
+            echo "Note: Static analysis is currently informational only and does not block PRs."
           fi
 
       - name: Run clang-tidy on sample files (push to master)

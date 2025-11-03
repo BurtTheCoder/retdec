@@ -14,6 +14,7 @@ jobs:
   coverage:
     name: Generate Code Coverage Report
     runs-on: ubuntu-22.04
+    timeout-minutes: 120  # 2 hours max
 
     steps:
       - uses: actions/checkout@v4
@@ -54,9 +55,10 @@ jobs:
           make -j$(nproc)
 
       - name: Run Unit Tests
+        continue-on-error: true  # Generate coverage even if some tests fail
         run: |
           cd build
-          ctest --output-on-failure || true
+          ctest --output-on-failure || echo "Some tests failed but continuing to generate coverage"
 
       - name: Generate Coverage Data
         run: |
@@ -77,6 +79,8 @@ jobs:
           lcov --list coverage_filtered.info
 
       - name: Upload coverage to Codecov
+        # Only run if CODECOV_TOKEN is set
+        if: ${{ secrets.CODECOV_TOKEN != '' }}
         uses: codecov/codecov-action@v4
         with:
           files: ./build/coverage_filtered.info
@@ -85,6 +89,12 @@ jobs:
           fail_ci_if_error: false
           verbose: true
           token: ${{ secrets.CODECOV_TOKEN }}
+
+      - name: Skip Codecov Upload (no token)
+        if: ${{ secrets.CODECOV_TOKEN == '' }}
+        run: |
+          echo "⚠️  CODECOV_TOKEN not set - skipping upload to Codecov"
+          echo "Coverage data is still generated locally and available as artifact"
 
       - name: Generate HTML Coverage Report
         run: |
