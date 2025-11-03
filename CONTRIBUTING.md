@@ -93,7 +93,7 @@ ctest --output-on-failure
 
 # Check code formatting
 find src include tests -type f \( -name '*.cpp' -o -name '*.h' \) \
-  -exec clang-format-14 -i {} \;
+  -exec clang-format-18 -i {} \;
 
 # Build in both Debug and Release modes
 cmake .. -DCMAKE_BUILD_TYPE=Debug -DRETDEC_TESTS=on
@@ -244,7 +244,7 @@ std::unique_ptr<CFG> analyzeFunction(
 
 ### Writing Tests
 
-All new features and bug fixes **must include tests**. RetDec uses Google Test framework with **3,317+ test cases**.
+All new features and bug fixes **must include tests**. RetDec uses Google Test framework with **3,237 test cases**.
 
 #### Test Requirements
 

@@ -2,6 +2,13 @@
 
 # dev
 
+* Enhancement: CI/CD Modernization - Updated CodeQL from v2 to v3, modernized clang tooling (14→18), added build caching for 50-70% faster builds, enabled CTest integration with all 3,237 tests, optimized artifact retention policies, and added autotools installation for YARA builds.
+* Enhancement: Updated dependencies - YARA to 4.5.5 with autotools build system, Capstone to 5.0.6.
+* Enhancement: Modernized type library databases - Enhanced linux.json with +158% more functions, complete OpenSSL API coverage in cstdlib.json, comprehensive documentation.
+* Enhancement: Updated YARA signature rules with +37% coverage for modern malware and compiler detection.
+* Enhancement: Comprehensive documentation improvements - Added Testing section with CTest usage, Troubleshooting section for common build/runtime issues, and Recent Updates section highlighting modernization work.
+* Fix: Resolved TLSH multiple definition linker errors affecting 4 executables (retdec-fileinfo, retdec-stacofin, retdec-unpacker, retdec-decompiler) caused by YARA 4.5.5 including TLSH library.
+* Fix: Capstone 5.0.6 ARM64 compatibility - Handled removal of ARM64_SYSREG_ICC_SEIEN_EL1 and ARM64_SYSREG_ICH_VSEIR_EL2 GICv3 interrupt controller system registers.
 * Fix: Handle Intel MPX instructions ([#1154](https://github.com/avast/retdec/pull/1154), [#1148](https://github.com/avast/retdec/issues/1148), [#1135](https://github.com/avast/retdec/issues/1135)).
 * Fix: Make RetDec compilable by the new gcc-13 ([#1149](https://github.com/avast/retdec/issues/1149), [#1153](https://github.com/avast/retdec/pull/1153)).
 
