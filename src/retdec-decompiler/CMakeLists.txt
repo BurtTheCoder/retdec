@@ -49,6 +49,10 @@ else() # Linux
 		-Wl,--whole-archive retdec::bin2llvmir -Wl,--no-whole-archive
 		-Wl,--whole-archive retdec::llvmir2hll -Wl,--no-whole-archive
 	)
+	# Allow multiple TLSH definitions (YARA includes TLSH, RetDec also has TLSH)
+	target_link_options(retdec-decompiler PRIVATE
+		-Wl,--allow-multiple-definition
+	)
 endif()
 
 set_target_properties(retdec-decompiler

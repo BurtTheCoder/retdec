@@ -93,6 +93,11 @@ target_link_libraries(main
 	retdec::unpackertool
 )
 
+# Allow multiple TLSH definitions (YARA includes TLSH, RetDec also has TLSH)
+target_link_options(main PRIVATE
+	-Wl,--allow-multiple-definition
+)
+
 set_target_properties(main
 	PROPERTIES
 		OUTPUT_NAME "retdec-unpacker"

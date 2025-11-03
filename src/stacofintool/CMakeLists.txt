@@ -10,6 +10,11 @@ target_link_libraries(stacofintool
 	retdec::loader
 )
 
+# Allow multiple TLSH definitions (YARA includes TLSH, RetDec also has TLSH)
+target_link_options(stacofintool PRIVATE
+	-Wl,--allow-multiple-definition
+)
+
 set_target_properties(stacofintool
 	PROPERTIES
 		OUTPUT_NAME "retdec-stacofin"

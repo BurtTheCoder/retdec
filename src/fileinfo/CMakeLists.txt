@@ -124,6 +124,11 @@ target_link_libraries(fileinfo
 	retdec::deps::tinyxml2
 )
 
+# Allow multiple TLSH definitions (YARA includes TLSH, RetDec also has TLSH)
+target_link_options(fileinfo PRIVATE
+	-Wl,--allow-multiple-definition
+)
+
 set_target_properties(fileinfo
 	PROPERTIES
 		OUTPUT_NAME "retdec-fileinfo"
