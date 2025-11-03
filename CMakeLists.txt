@@ -6,6 +6,12 @@ project(retdec
 	VERSION 5.0
 )
 
+# Set policy CMP0135 to NEW to use extraction timestamps for downloaded archives
+# This prevents warnings about URL download timestamp behavior
+if(POLICY CMP0135)
+	cmake_policy(SET CMP0135 NEW)
+endif()
+
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/GetGitRevisionDescription.cmake)
 get_git_head_revision(
 	RETDEC_GIT_REFSPEC
@@ -103,15 +109,21 @@ set_directory_properties(PROPERTIES EP_PREFIX "${EP_PREFIX}")
 
 # Compilation warnings.
 if(MSVC)
-	# For the moment, suppress all warnings when building with MSVC on Windows
-	# because there are too many warnings that clutter the build output (#106).
-	# We should investigate the warnings, fix them, and then enable their
-	# emission (e.g. by replacing /W0 with /W3 in the code below).
+	# Enable warnings at level 3 (reasonable level)
+	# Level 4 (/W4) is too verbose for now, but can be enabled in future
 	if(CMAKE_CXX_FLAGS MATCHES "/W[0-4]")
-		string(REGEX REPLACE "/W[0-4]" "/W0" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
+		string(REGEX REPLACE "/W[0-4]" "/W3" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
 	else()
-		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W0")
+		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W3")
 	endif()
+
+	# Suppress specific warnings that are noisy or false positives
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /wd4101") # unreferenced local variable
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /wd4267") # conversion from 'size_t' to 'type', possible loss of data
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /wd4244") # conversion from 'type1' to 'type2', possible loss of data
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /wd4800") # forcing value to bool 'true' or 'false'
+
+	# Silence C++17 deprecation warnings
 	add_definitions(-D_SILENCE_CXX17_ITERATOR_BASE_CLASS_DEPRECATION_WARNING)
 
 	if(RETDEC_MSVC_STATIC_RUNTIME)

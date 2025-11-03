@@ -1,0 +1,81 @@
+# CodeQL Security Analysis for RetDec
+# Automatically scans code for security vulnerabilities
+
+name: "CodeQL Security Analysis"
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+  schedule:
+    # Run every Monday at 9 AM UTC
+    - cron: '0 9 * * 1'
+
+jobs:
+  analyze:
+    name: Analyze Code for Security Issues
+    runs-on: ubuntu-22.04
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
+
+    strategy:
+      fail-fast: false
+      matrix:
+        language: [ 'cpp' ]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            cmake \
+            build-essential \
+            libssl-dev \
+            python3 \
+            autoconf \
+            automake \
+            libtool \
+            pkg-config \
+            m4 \
+            zlib1g-dev
+
+      # Initialize CodeQL tools for scanning
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: ${{ matrix.language }}
+          # Specify queries to run:
+          # - security-extended: All default security queries plus extended checks
+          # - security-and-quality: Security plus code quality
+          queries: security-extended
+
+      # Configure the build for CodeQL analysis
+      - name: Configure Build
+        run: |
+          mkdir build
+          cd build
+          cmake .. \
+            -DCMAKE_BUILD_TYPE=Debug \
+            -DRETDEC_TESTS=OFF \
+            -DRETDEC_DOC=OFF
+
+      # Build the codebase
+      - name: Build Project
+        run: |
+          cd build
+          # Build with multiple cores but limit to avoid OOM
+          make -j2
+
+      # Perform CodeQL Analysis
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
+        with:
+          category: "/language:${{ matrix.language }}"

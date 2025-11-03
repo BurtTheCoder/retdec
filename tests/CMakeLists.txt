@@ -13,3 +13,8 @@ cond_add_subdirectory(loader RETDEC_ENABLE_LOADER_TESTS)
 cond_add_subdirectory(serdes RETDEC_ENABLE_SERDES_TESTS)
 cond_add_subdirectory(unpacker RETDEC_ENABLE_UNPACKER_TESTS)
 cond_add_subdirectory(utils RETDEC_ENABLE_UTILS_TESTS)
+
+# Integration tests (end-to-end testing)
+if(RETDEC_TESTS)
+    add_subdirectory(integration)
+endif()
