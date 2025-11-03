@@ -5,11 +5,34 @@ cmake_minimum_required(VERSION 3.13)
 
 # Integration tests require the full decompiler to be built
 if(NOT RETDEC_TESTS)
+    message(STATUS "Integration tests skipped (RETDEC_TESTS=OFF)")
     return()
 endif()
 
-# Find GoogleTest
-find_package(GTest REQUIRED)
+# Try to find or use GoogleTest
+# RetDec builds its own GoogleTest, so we check if it's available
+if(NOT TARGET googletest)
+    # GoogleTest not built yet or not available
+    # Try to find system GoogleTest
+    find_package(GTest QUIET)
+
+    if(NOT GTest_FOUND)
+        message(STATUS "Integration tests skipped (GoogleTest not available)")
+        message(STATUS "  - GoogleTest will be built by RetDec dependencies")
+        message(STATUS "  - Integration tests can be enabled in a future build")
+        return()
+    endif()
+
+    # Use system GoogleTest
+    set(GTEST_TARGET GTest::gtest)
+    set(GTEST_MAIN_TARGET GTest::gtest_main)
+    message(STATUS "Integration tests using system GoogleTest")
+else()
+    # Use RetDec's built GoogleTest
+    set(GTEST_TARGET googletest)
+    set(GTEST_MAIN_TARGET googletest)
+    message(STATUS "Integration tests using RetDec's GoogleTest")
+endif()
 
 # Create integration test data directory
 set(INTEGRATION_TEST_DATA_DIR "${CMAKE_CURRENT_SOURCE_DIR}/data")
@@ -29,8 +52,8 @@ target_link_libraries(retdec-integration-tests
         retdec::loader
         retdec::config
         retdec::common
-        GTest::gtest
-        GTest::gtest_main
+        ${GTEST_TARGET}
+        ${GTEST_MAIN_TARGET}
 )
 
 target_include_directories(retdec-integration-tests
@@ -62,4 +85,4 @@ install(TARGETS retdec-integration-tests
     DESTINATION bin
 )
 
-message(STATUS "Integration tests configured")
+message(STATUS "Integration tests configured successfully")

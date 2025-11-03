@@ -6,6 +6,12 @@ project(retdec
 	VERSION 5.0
 )
 
+# Set policy CMP0135 to NEW to use extraction timestamps for downloaded archives
+# This prevents warnings about URL download timestamp behavior
+if(POLICY CMP0135)
+	cmake_policy(SET CMP0135 NEW)
+endif()
+
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/GetGitRevisionDescription.cmake)
 get_git_head_revision(
 	RETDEC_GIT_REFSPEC
