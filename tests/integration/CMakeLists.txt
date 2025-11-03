@@ -11,7 +11,7 @@ endif()
 
 # Try to find or use GoogleTest
 # RetDec builds its own GoogleTest, so we check if it's available
-if(NOT TARGET googletest)
+if(NOT TARGET gtest)
     # GoogleTest not built yet or not available
     # Try to find system GoogleTest
     find_package(GTest QUIET)
@@ -29,8 +29,8 @@ if(NOT TARGET googletest)
     message(STATUS "Integration tests using system GoogleTest")
 else()
     # Use RetDec's built GoogleTest
-    set(GTEST_TARGET googletest)
-    set(GTEST_MAIN_TARGET googletest)
+    set(GTEST_TARGET gtest)
+    set(GTEST_MAIN_TARGET gtest_main)
     message(STATUS "Integration tests using RetDec's GoogleTest")
 endif()
 
