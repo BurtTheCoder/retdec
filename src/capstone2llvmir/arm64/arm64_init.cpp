@@ -472,7 +472,7 @@ void Capstone2LlvmIrTranslatorArm64_impl::initializeRegNameMap()
 			{ARM64_SYSREG_ICC_IGRPEN0_EL1, "icc_igrpen0_el1"},
 			{ARM64_SYSREG_ICC_IGRPEN1_EL1, "icc_igrpen1_el1"},
 			{ARM64_SYSREG_ICC_IGRPEN1_EL3, "icc_igrpen1_el3"},
-			{ARM64_SYSREG_ICC_SEIEN_EL1, "icc_seien_el1"},
+			// {ARM64_SYSREG_ICC_SEIEN_EL1, "icc_seien_el1"}, // Removed in Capstone 5.0.6
 			{ARM64_SYSREG_ICC_AP0R0_EL1, "icc_ap0r0_el1"},
 			{ARM64_SYSREG_ICC_AP0R1_EL1, "icc_ap0r1_el1"},
 			{ARM64_SYSREG_ICC_AP0R2_EL1, "icc_ap0r2_el1"},
@@ -492,7 +492,7 @@ void Capstone2LlvmIrTranslatorArm64_impl::initializeRegNameMap()
 			{ARM64_SYSREG_ICH_HCR_EL2, "ich_hcr_el2"},
 			{ARM64_SYSREG_ICH_MISR_EL2, "ich_misr_el2"},
 			{ARM64_SYSREG_ICH_VMCR_EL2, "ich_vmcr_el2"},
-			{ARM64_SYSREG_ICH_VSEIR_EL2, "ich_vseir_el2"},
+			// {ARM64_SYSREG_ICH_VSEIR_EL2, "ich_vseir_el2"}, // Removed in Capstone 5.0.6
 			{ARM64_SYSREG_ICH_LR0_EL2, "ich_lr0_el2"},
 			{ARM64_SYSREG_ICH_LR1_EL2, "ich_lr1_el2"},
 			{ARM64_SYSREG_ICH_LR2_EL2, "ich_lr2_el2"},
@@ -1367,7 +1367,7 @@ void Capstone2LlvmIrTranslatorArm64_impl::initializeRegTypeMap()
 		{ARM64_SYSREG_ICC_IGRPEN0_EL1, i64},
 		{ARM64_SYSREG_ICC_IGRPEN1_EL1, i64},
 		{ARM64_SYSREG_ICC_IGRPEN1_EL3, i64},
-		{ARM64_SYSREG_ICC_SEIEN_EL1, i64},
+		// {ARM64_SYSREG_ICC_SEIEN_EL1, i64}, // Removed in Capstone 5.0.6
 		{ARM64_SYSREG_ICC_AP0R0_EL1, i64},
 		{ARM64_SYSREG_ICC_AP0R1_EL1, i64},
 		{ARM64_SYSREG_ICC_AP0R2_EL1, i64},
@@ -1387,7 +1387,7 @@ void Capstone2LlvmIrTranslatorArm64_impl::initializeRegTypeMap()
 		{ARM64_SYSREG_ICH_HCR_EL2, i64},
 		{ARM64_SYSREG_ICH_MISR_EL2, i64},
 		{ARM64_SYSREG_ICH_VMCR_EL2, i64},
-		{ARM64_SYSREG_ICH_VSEIR_EL2, i64},
+		// {ARM64_SYSREG_ICH_VSEIR_EL2, i64}, // Removed in Capstone 5.0.6
 		{ARM64_SYSREG_ICH_LR0_EL2, i64},
 		{ARM64_SYSREG_ICH_LR1_EL2, i64},
 		{ARM64_SYSREG_ICH_LR2_EL2, i64},
