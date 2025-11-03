@@ -36,6 +36,17 @@ if(NOT CMAKE_BUILD_TYPE)
 	set(CMAKE_BUILD_TYPE "${default_build_type}" CACHE STRING "Choose the type of build." FORCE)
 endif()
 
+# Add code coverage support for Debug builds with tests enabled.
+# gcov/lcov are not available on MSVC, so only apply to GCC/Clang.
+if(CMAKE_BUILD_TYPE MATCHES Debug AND RETDEC_TESTS)
+	if(NOT MSVC)
+		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} --coverage")
+		set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} --coverage")
+		set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} --coverage")
+		message(STATUS "Code coverage enabled for Debug build with tests")
+	endif()
+endif()
+
 ## Includes.
 include(GNUInstallDirs)
 include(CMakePackageConfigHelpers)

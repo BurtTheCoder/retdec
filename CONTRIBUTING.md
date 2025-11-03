@@ -118,9 +118,15 @@ git rebase upstream/master
 
 ### C++ Style
 
-RetDec uses **C++17 standard** with the following conventions:
+RetDec **requires C++17 standard** for all code:
+
+- Do not use C++14 or earlier features when C++17 alternatives exist
+- Utilize C++17 features where appropriate (e.g., `std::optional`, `std::variant`, `std::filesystem`, structured bindings)
+- All code must compile with C++17-compliant compilers (GCC >= 7, Clang >= 5, MSVC >= 2017)
 
 #### Naming Conventions
+
+Follow these naming conventions **strictly and consistently**:
 
 - **Classes/Structs/Enums**: `CamelCase`
   ```cpp
@@ -129,7 +135,7 @@ RetDec uses **C++17 standard** with the following conventions:
   enum class ArchType { ... };
   ```
 
-- **Functions/Methods**: `camelCase`
+- **Functions/Methods**: `camelCase` (starting with lowercase)
   ```cpp
   void analyzeFunction();
   bool isValidAddress();
@@ -140,15 +146,6 @@ RetDec uses **C++17 standard** with the following conventions:
   ```cpp
   int functionCount;
   std::string variableName;
-  ```
-
-- **Private Members**: `_prefixed`
-  ```cpp
-  class MyClass {
-  private:
-      int _memberVariable;
-      std::string _name;
-  };
   ```
 
 - **Constants/Macros**: `UPPER_CASE`
@@ -165,21 +162,25 @@ RetDec uses **C++17 standard** with the following conventions:
 
 #### Code Formatting
 
-- **Indentation**: 4 spaces (no tabs)
-- **Line length**: 120 characters maximum
-- **Braces**: Opening brace on same line (K&R style)
-  ```cpp
-  if (condition) {
-      doSomething();
-  } else {
-      doSomethingElse();
-  }
+**Always use clang-format** - RetDec provides a `.clang-format` configuration file at the repository root:
+
+- **Automatically format** all C++ files before committing:
+  ```bash
+  # Format a single file
+  clang-format -i path/to/file.cpp
+
+  # Format all modified C++ files
+  git diff --name-only --cached | grep -E '\.(cpp|h)$' | xargs clang-format -i
   ```
 
-- **Use `.clang-format`**: We provide a `.clang-format` configuration file. Format your code before committing:
-  ```bash
-  clang-format-14 -i path/to/file.cpp
-  ```
+- **Key formatting rules** (from `.clang-format`):
+  - **Indentation**: 4 spaces, tabs for continuation
+  - **Column limit**: 120 characters maximum
+  - **Pointer alignment**: Left (`int* ptr`, not `int *ptr`)
+  - **Braces**: Custom wrapping (AfterControlStatement: Always, AfterFunction: true)
+  - **Break before binary operators**: NonAssignment
+
+- **Do not** manually override clang-format settings in code
 
 #### Modern C++ Features
 
@@ -243,14 +244,23 @@ std::unique_ptr<CFG> analyzeFunction(
 
 ### Writing Tests
 
-All new features and bug fixes **must include tests**:
+All new features and bug fixes **must include tests**. RetDec uses Google Test framework with **3,317+ test cases**.
+
+#### Test Requirements
+
+1. **All new features require tests**
+2. **All bug fixes require regression tests**
+3. **Aim for high code coverage** (target >80% for new code)
+4. **Tests must pass** with `ctest --output-on-failure`
+
+#### Test Structure
 
 1. **Unit Tests**: Test individual components in isolation
    - Location: `tests/<module>/`
    - Framework: Google Test
    - Example: `tests/bin2llvmir/providers/tests/abi_tests.cpp`
 
-2. **Test Structure**:
+2. **Test Template**:
    ```cpp
    #include <gtest/gtest.h>
    #include "retdec/module/your_class.h"
@@ -262,20 +272,33 @@ All new features and bug fixes **must include tests**:
    class YourClassTests : public ::testing::Test {
    protected:
        void SetUp() override {
-           // Setup code
+           // Setup code - runs before each test
+       }
+
+       void TearDown() override {
+           // Cleanup code - runs after each test
        }
    };
 
-   TEST_F(YourClassTests, TestCaseName) {
-       // Arrange
+   TEST_F(YourClassTests, DescriptiveTestName) {
+       // Arrange - set up test data
        YourClass obj;
+       int expectedValue = 42;
 
-       // Act
+       // Act - perform the action being tested
        auto result = obj.doSomething();
 
-       // Assert
-       EXPECT_TRUE(result);
+       // Assert - verify the results
+       EXPECT_TRUE(result.isValid());
        EXPECT_EQ(expectedValue, result.getValue());
+       ASSERT_NE(nullptr, result.getPointer());
+   }
+
+   TEST_F(YourClassTests, HandlesErrorCase) {
+       YourClass obj;
+
+       // Test error handling
+       EXPECT_THROW(obj.invalidOperation(), std::runtime_error);
    }
 
    } // namespace tests
@@ -283,8 +306,10 @@ All new features and bug fixes **must include tests**:
    } // namespace retdec
    ```
 
-3. **Test Coverage**: Aim for >80% coverage for new code
-4. **Run Tests**: All tests must pass before submitting PR
+3. **Test Coverage Goals**:
+   - **New features**: Aim for >80% code coverage
+   - **Bug fixes**: Include test that would fail without the fix
+   - **Edge cases**: Test boundary conditions, null inputs, error paths
 
 ### Integration Tests
 
@@ -297,15 +322,36 @@ For end-to-end functionality:
 
 ### Before Submitting
 
-Checklist:
-- [ ] Code follows style guidelines
-- [ ] Code is formatted with `clang-format`
-- [ ] All tests pass (unit and integration)
+**Checklist - all items required:**
+
+- [ ] Code follows style guidelines (C++17, naming conventions)
+- [ ] Code is formatted with `clang-format` using `.clang-format` config
+- [ ] All tests pass: `ctest --output-on-failure`
 - [ ] New tests added for new functionality
+- [ ] **CHANGELOG.md updated** with your changes under `# dev` section
 - [ ] Documentation updated (code comments, README, etc.)
-- [ ] CHANGELOG.md updated with your changes
 - [ ] No compiler warnings introduced
 - [ ] Branch is rebased on latest master
+
+### Updating CHANGELOG.md
+
+**Every PR must update CHANGELOG.md:**
+
+1. Add entry under `# dev` section at the top of the file
+2. Use the appropriate prefix:
+   - `* New Feature:` for new functionality
+   - `* Enhancement:` for improvements to existing features
+   - `* Fix:` for bug fixes
+3. Format: `* Category: Brief description (#PR_number, #issue_number).`
+4. Reference issues with `#123` syntax
+
+**Example:**
+```markdown
+# dev
+
+* Enhancement: Add support for ARM64 relocations (#456, #123).
+* Fix: Correct null pointer dereference in type recovery (#789).
+```
 
 ### Submitting PR
 
@@ -339,88 +385,113 @@ Checklist:
 
 ### Code Review Process
 
-1. Automated checks will run (CI, static analysis, tests)
-2. Maintainers will review your code
-3. Address review comments by pushing new commits
-4. Once approved, a maintainer will merge your PR
+All PRs require code review before merging:
 
-**Review Expectations**:
-- Reviews typically within 1-2 weeks
-- Be responsive to feedback
-- Be patient with the review process
-- Participate in discussion constructively
+1. **Automated checks** will run (CI, tests, static analysis)
+2. **Maintainers review** your code (may take 1-2 weeks)
+3. **Address feedback** by pushing new commits to your branch
+4. **Request re-review** after making changes
+5. **Maintainer merges** once approved
+
+**Keep PRs Focused and Small:**
+- **One feature/fix per PR** - easier to review and merge
+- **Split large changes** into multiple smaller PRs
+- **Avoid scope creep** - stay focused on the stated goal
+- **Small PRs get reviewed faster**
+
+**Review Expectations:**
+- All PRs require at least one review from a maintainer
+- Be responsive to review comments
+- Address all feedback before approval
+- Keep discussions professional and constructive
+- Be patient - RetDec is in **limited maintenance mode**
+
+**Project Status Note:**
+RetDec is currently in **limited maintenance mode**:
+- PRs are welcomed and reviewed with priority
+- Issues may be addressed with delays
+- High-quality PRs with tests are prioritized
 
 ## Commit Message Guidelines
 
-Write clear, meaningful commit messages:
+Write clear, meaningful commit messages that help reviewers understand your changes.
+
+### Rules
+
+1. **Use present tense**: "Add feature" not "Added feature"
+2. **Use imperative mood**: "Fix bug" not "Fixes bug" or "Fixed bug"
+3. **Keep first line under 72 characters**: Ideally 50, maximum 72
+4. **Reference issues**: Use `#123` to link related issues
+5. **Don't end subject with period**: Keep it clean
+6. **Capitalize first letter**: Start with uppercase
 
 ### Format
 
 ```
-<type>: <subject>
+Brief summary of change (50-72 characters)
 
-<body>
+Optional detailed explanation of what changed and why.
+Wrap lines at 72 characters. Leave a blank line between
+the subject and body.
 
-<footer>
+Reference related issues using #123 syntax.
 ```
-
-### Type
-
-- `feat`: New feature
-- `fix`: Bug fix
-- `docs`: Documentation changes
-- `refactor`: Code refactoring
-- `test`: Adding or updating tests
-- `perf`: Performance improvements
-- `build`: Build system changes
-- `ci`: CI/CD changes
-- `chore`: Maintenance tasks
-
-### Subject
-
-- Use imperative mood: "Add feature" not "Added feature"
-- Keep under 72 characters
-- Don't end with a period
-- Be specific and descriptive
-
-### Body (optional)
-
-- Explain **what** and **why**, not **how**
-- Wrap at 72 characters
-- Separate from subject with blank line
-
-### Footer (optional)
-
-- Reference issues: `Fixes #123`, `Closes #456`
-- Note breaking changes: `BREAKING CHANGE: description`
 
 ### Examples
 
-```
-feat: Add ARM64 calling convention provider
+**Good commit messages:**
 
-Implements calling convention detection for ARM64 (AArch64)
-architecture. Supports both standard and iOS-specific conventions.
+```
+Add support for ARM64 calling conventions
+
+Implement detection and analysis of ARM64 AArch64 calling
+conventions including standard AAPCS64 and iOS-specific
+variants. This enables proper decompilation of ARM64 binaries.
 
 Fixes #789
 ```
 
 ```
-fix: Correct null pointer dereference in type recovery
+Fix null pointer dereference in type recovery
 
-The type inference algorithm could dereference a null pointer
-when analyzing functions with no return value. Added null check
-and test case to prevent regression.
+The type inference algorithm could crash when analyzing
+functions with no return value. Add null check before
+pointer access and corresponding test case.
 
 Fixes #1234
 ```
 
 ```
-docs: Update build instructions for Ubuntu 24.04
+Update CHANGELOG.md with v5.0 release notes
 
-Added new dependency requirements and updated CMake version
-recommendation for Ubuntu 24.04 LTS.
+Add comprehensive list of changes, enhancements, and fixes
+for the 5.0 release.
 ```
+
+**Bad commit messages:**
+
+```
+fixed stuff
+```
+
+```
+Added changes to parser and updated docs and fixed bug
+```
+
+```
+WIP
+```
+
+### Referencing Issues
+
+- Use `#123` to reference issue number 123
+- Use `Fixes #123` to automatically close issue when merged
+- Use `Relates to #123` for related but not closing issues
+
+**Examples:**
+- `Fixes #456` - Closes issue 456
+- `Addresses #789` - References issue 789
+- `See #123, #456` - Multiple issue references
 
 ## Building and Testing
 
@@ -432,10 +503,40 @@ cmake .. -DCMAKE_INSTALL_PREFIX=install -DRETDEC_TESTS=on
 make -j$(nproc)
 ```
 
+### Build with Tests (Required for Contributors)
+
+All contributors **must** build with tests enabled:
+
+```bash
+mkdir build && cd build
+cmake .. -DRETDEC_TESTS=on
+make -j$(nproc)
+```
+
+### Running Tests
+
+**Run tests before submitting any PR:**
+
+```bash
+# All tests with failure output
+ctest --output-on-failure
+
+# Run tests in parallel (faster)
+ctest -j$(nproc) --output-on-failure
+
+# Specific test suite
+ctest -R bin2llvmir --output-on-failure
+
+# Verbose output for debugging
+ctest -V
+```
+
+**Important:** All tests must pass before your PR will be accepted.
+
 ### Build Options
 
 ```bash
-# Debug build with tests
+# Debug build with tests (recommended for development)
 cmake .. -DCMAKE_BUILD_TYPE=Debug -DRETDEC_TESTS=on
 
 # Release build with documentation
@@ -443,22 +544,6 @@ cmake .. -DCMAKE_BUILD_TYPE=Release -DRETDEC_DOC=on
 
 # Build specific component only
 cmake .. -DRETDEC_ENABLE_BIN2LLVMIR=on
-```
-
-### Running Tests
-
-```bash
-# All tests
-ctest
-
-# Specific test suite
-ctest -R bin2llvmir
-
-# Verbose output
-ctest --output-on-failure
-
-# Parallel execution
-ctest -j$(nproc)
 ```
 
 ### Debugging

@@ -40,19 +40,87 @@ For more information, check out our
 * REcon Montreal 2018 talk: [slides](https://retdec.com/static/publications/retdec-slides-recon-2018.pdf)
 * [Publications](https://retdec.com/publications/)
 
-## Installation
+## Table of Contents
 
-There are two ways of obtaining and installing RetDec:
-1. Download and unpack a pre-built [stable](https://github.com/avast/retdec/releases) or [bleeding-edge](https://github.com/avast/retdec#automated-teamcity-builds) package and follow instructions in the _Use_ section of its `retdec/share/retdec/README.md` file after unpacking.
-2. Build RetDec by yourself from sources by following the [Build and Installation](#build-and-installation) section. After installation, follow instructions below.
+* [Quick Start](#quick-start)
+* [For Users](#for-users)
+  * [Installation](#installation)
+  * [Use](#use)
+  * [Docker](#docker)
+  * [Nightly Builds](#nightly-builds)
+* [For Developers](#for-developers)
+  * [Build and Installation](#build-and-installation)
+  * [Use of RetDec Libraries](#use-of-retdec-libraries)
+* [Resources](#resources)
+  * [Project Documentation](#project-documentation)
+  * [Related Repositories](#related-repositories)
+* [License](#license)
+* [Contributing](#contributing)
+* [Acknowledgements](#acknowledgements)
 
-We currently support Windows (7 or later), Linux, macOS, and (experimentally) FreeBSD. An installed version of RetDec requires approximately 5 to 6 GB of free disk space.
+## Quick Start
 
-## Use
+RetDec transforms compiled binary executables into readable C-like source code, making it easier to understand what a program does without access to the original source.
 
-Please, ensure that you reading instructions corresponding to the used RetDec version. If unsure, refer to the `retdec/share/retdec/README.md` file in the installation.
+### Try It in 3 Steps
 
-### Windows
+1. **Download a pre-built package** for your platform from the [latest release](https://github.com/avast/retdec/releases)
+
+2. **Extract the package** to a directory of your choice
+
+3. **Run the decompiler** on any binary file:
+
+   ```bash
+   # Linux/macOS
+   $RETDEC_INSTALL_DIR/bin/retdec-decompiler /path/to/binary
+
+   # Windows
+   %RETDEC_INSTALL_DIR%\bin\retdec-decompiler.exe C:\path\to\binary.exe
+   ```
+
+The decompiler will generate a `.c` file with the decompiled source code in the same directory as your input binary.
+
+### What Can I Decompile?
+
+RetDec works with:
+* Executable files: Windows PE, Linux ELF, macOS Mach-O
+* Object files and archives
+* Firmware and embedded binaries
+* Raw machine code dumps
+
+### Need More Details?
+
+* See the [Use](#use) section for platform-specific instructions
+* Check the [Installation](#installation) section for system requirements
+* Visit our [Wiki](https://github.com/avast/retdec/wiki) for advanced usage examples
+* Try the [Docker image](#docker) for a containerized experience
+
+---
+
+## For Users
+
+This section covers installation and usage of RetDec for end users who want to decompile binaries.
+
+### Installation
+
+RetDec can be installed in two ways:
+
+1. **Pre-built packages** (recommended for users): Download and unpack a pre-built [stable](https://github.com/avast/retdec/releases) or [bleeding-edge](#nightly-builds) package and follow the usage instructions below.
+
+2. **Build from source** (for developers): See the [Build and Installation](#build-and-installation) section in the "For Developers" section below.
+
+#### System Requirements
+
+* **Supported platforms:** Windows (7 or later), Linux, macOS, and (experimentally) FreeBSD
+* **Disk space:** Approximately 5 to 6 GB of free disk space for an installed version
+
+### Use
+
+After installing RetDec, follow the platform-specific instructions below to decompile binaries.
+
+**Note:** Please ensure that you are reading instructions corresponding to the used RetDec version. If unsure, refer to the `retdec/share/retdec/README.md` file in your installation.
+
+#### Windows
 
 1. After [installing RetDec](#installation), install [Microsoft Visual C++ Redistributable for Visual Studio 2017](https://support.microsoft.com/en-us/help/2977003/the-latest-supported-visual-c-downloads).
 
@@ -69,7 +137,7 @@ Please, ensure that you reading instructions corresponding to the used RetDec ve
 
    For more information, run `retdec-decompiler.exe` with `--help`.
 
-### Linux
+#### Linux
 
 1. After [installing RetDec](#installation), install the following packages via your distribution's package manager:
 
@@ -84,7 +152,7 @@ Please, ensure that you reading instructions corresponding to the used RetDec ve
 
    For more information, run `retdec-decompiler` with `--help`.
 
-### macOS
+#### macOS
 
 1. After [installing RetDec](#installation), install the following packages:
 
@@ -99,9 +167,9 @@ Please, ensure that you reading instructions corresponding to the used RetDec ve
 
    For more information, run `retdec-decompiler` with `--help`.
 
-### FreeBSD (Experimental)
+#### FreeBSD (Experimental)
 
-1. There are currently no pre-built "ports" packages for FreeBSD. You will have to build and install the decompiler by yourself. The process is described below.
+1. There are currently no pre-built "ports" packages for FreeBSD. You will have to build and install the decompiler by yourself. The process is described in the [Build and Installation](#build-and-installation) section below.
 
 2. To decompile a binary file named `test.exe`, run
 
@@ -111,46 +179,57 @@ Please, ensure that you reading instructions corresponding to the used RetDec ve
 
    For more information, run `retdec-decompiler` with `--help`.
 
-### Use of RetDec libraries
+### Docker
 
-You can easily use various RetDec libraries in your projects - if they are build with CMake. RetDec installation contains all the necessary headers, libraries, and CMake scripts.
+Docker provides a convenient way to run RetDec without installing dependencies on your system. Docker support is maintained by the community.
 
-If you installed RetDec into a standard installation location of your system (e.g. `/usr`, `/usr/local`), all you need to do in order to use its components is:
+#### Run Container
 
-```cmake
-find_package(retdec 5.0 REQUIRED
-   COMPONENTS
-      <component>
-      [...]
-)
-target_link_libraries(your-project
-   PUBLIC
-      retdec::<component>
-      [...]
-)
+If your `uid` is not 1000, make sure that the directory containing your input binary files is accessible for RetDec:
+```bash
+chmod 0777 /path/to/local/directory
 ```
 
-If you did not install RetDec somewhere where it can be automatically discovered, you need to help CMake find it before `find_package()` is used. There are generally two ways to do it (pick & use only one):
+Now, you can run the decompiler inside a container:
+```bash
+docker run --rm -v /path/to/local/directory:/destination retdec retdec-decompiler /destination/binary
+```
 
-1. Add the RetDec installation directory to [`CMAKE_PREFIX_PATH`](https://cmake.org/cmake/help/latest/variable/CMAKE_PREFIX_PATH.html):
-    ```cmake
-    list(APPEND CMAKE_PREFIX_PATH ${RETDEC_INSTALL_DIR})
-    ```
+**Note:** Do not modify the `/destination` part. You only need to change `/path/to/local/directory`. Output files will be generated to `/path/to/local/directory`.
 
-2. Set the path to installed RetDec CMake scripts to `retdec_DIR`:
-    ```cmake
-    set(retdec_DIR ${RETDEC_INSTALL_DIR}/share/retdec/cmake)
-    ```
+For information on building Docker images yourself, see the [Build in Docker](#build-in-docker) section under "For Developers".
 
-See the [Repository Overview](https://github.com/avast/retdec/wiki/Repository-Overview) wiki page for the list of available RetDec components, or the [retdec-build-system-tests](https://github.com/avast/retdec-build-system-tests) for demos on how to use them.
+### Nightly Builds
 
-## Build and Installation
+We generate up-to-date RetDec packages from the latest commit in the `master` branch using:
+* TeamCity servers
+* GitHub Actions
 
-This section describes a local build and installation of RetDec. Instructions for Docker are given in the next section.
+These builds are meant for developers, contributors, and testers who want to try the latest features or verify bug fixes. Use at your own risk as regressions are possible. For stable releases, download from the [official releases page](https://github.com/avast/retdec/releases).
 
-### Requirements
+#### TeamCity Builds
 
-#### Linux
+* [Windows Server 2016, version 10.0](https://retdec-tc.avast.com/repository/download/Retdec_WinBuild/.lastSuccessful/package/retdec-master-windows-64b.7z?guest=1)
+* [Ubuntu Bionic Linux, version 18.04](https://retdec-tc.avast.com/repository/download/RetDec_LinuxBuild/.lastSuccessful/package/retdec-master-linux-64b.tar.xz?guest=1)
+* [Mac OS X, version 10.14.6](https://retdec-tc.avast.com/repository/download/Retdec_MacBuild/.lastSuccessful/package/retdec-master-macos-64b.tar.xz?guest=1)
+
+#### GitHub Actions Builds
+
+You can find builds for macOS, Linux and Windows in the [latest RetDec CI workflow run](https://github.com/avast/retdec/actions/workflows/retdec-ci.yml).
+
+---
+
+## For Developers
+
+This section covers building RetDec from source and using RetDec libraries in your own projects.
+
+### Build and Installation
+
+This section describes a local build and installation of RetDec. Instructions for Docker are given in the [Build in Docker](#build-in-docker) section.
+
+#### Requirements
+
+##### Linux
 
 * A C++ compiler and standard C++ library supporting C++17 (e.g. GCC >= 7)
 * [CMake](https://cmake.org/) (version >= 3.6)
@@ -181,7 +260,7 @@ On Arch Linux, the required packages can be installed with `pacman`:
 sudo pacman --needed -S base-devel cmake git openssl python3 autoconf automake libtool pkg-config m4 zlib upx doxygen graphviz
 ```
 
-#### Windows
+##### Windows
 
 * Microsoft Visual C++ (version >= Visual Studio 2017 version 15.7)
 * [CMake](https://cmake.org/) (version >= 3.6)
@@ -190,7 +269,7 @@ sudo pacman --needed -S base-devel cmake git openssl python3 autoconf automake l
 * [Python](https://www.python.org/) (version >= 3.4)
 * Optional: [Doxygen](http://ftp.stack.nl/pub/users/dimitri/doxygen-1.8.13-setup.exe) and [Graphviz](https://graphviz.gitlab.io/_pages/Download/windows/graphviz-2.38.msi) for generating API documentation
 
-#### macOS
+##### macOS
 
 Packages should be preferably installed via [Homebrew](https://brew.sh).
 
@@ -203,9 +282,9 @@ Packages should be preferably installed via [Homebrew](https://brew.sh).
 * [autotools](https://en.wikipedia.org/wiki/GNU_Build_System) ([autoconf](https://www.gnu.org/software/autoconf/autoconf.html), [automake](https://www.gnu.org/software/automake/), and [libtool](https://www.gnu.org/software/libtool/))
 * Optional: [Doxygen](http://www.stack.nl/~dimitri/doxygen/) and [Graphviz](http://www.graphviz.org/) for generating API documentation
 
-#### FreeBSD (Experimental)
+##### FreeBSD (Experimental)
 
-Packages should be installed via FreeBSDs pre-compiled package repository using the `pkg` command or built from scratch using the `ports` database method.
+Packages should be installed via FreeBSD's pre-compiled package repository using the `pkg` command or built from scratch using the `ports` database method.
 
 * Full "pkg" tool instructions: [handbook pkg method](https://www.freebsd.org/doc/handbook/pkgng-intro.html)
   * `pkg install cmake python37 git autotools`
@@ -218,9 +297,9 @@ OR
   * `cd /usr/ports/devel/cmake`
   * `make install clean`
 
-### Process
+#### Build Process
 
-Note: Although RetDec now supports a system-wide installation ([#94](https://github.com/avast/retdec/issues/94)), unless you use your distribution's package manager to install it, we recommend installing RetDec locally into a designated directory. The reason for this is that uninstallation will be easier as you will only need to remove a single directory. To perform a local installation, run `cmake` with the `-DCMAKE_INSTALL_PREFIX=<path>` parameter, where `<path>` is directory into which RetDec will be installed (e.g. `$HOME/projects/retdec-install` on Linux and macOS, and `C:\projects\retdec-install` on Windows).
+**Note:** Although RetDec supports a system-wide installation ([#94](https://github.com/avast/retdec/issues/94)), unless you use your distribution's package manager, we recommend installing RetDec locally into a designated directory. This makes uninstallation easier as you only need to remove a single directory. To perform a local installation, run `cmake` with the `-DCMAKE_INSTALL_PREFIX=<path>` parameter, where `<path>` is the directory into which RetDec will be installed (e.g. `$HOME/projects/retdec-install` on Linux and macOS, and `C:\projects\retdec-install` on Windows).
 
 * Clone the repository:
   * `git clone https://github.com/avast/retdec`
@@ -276,63 +355,68 @@ You can pass the following additional parameters to `cmake`:
   * `-DRETDEC_ENABLE_ALL=ON` can be used to (re-)enable all the components.
   * Alternatively, `-DRETDEC_ENABLE=<comma-separated component list>` can be used instead of `-DRETDEC_ENABLE_<component>=ON` (e.g. `-DRETDEC_ENABLE=fileformat,loader,ctypesparser` is equivalent to `-DRETDEC_ENABLE_FILEFORMAT=ON -DRETDEC_ENABLE_LOADER=ON -DRETDEC_ENABLE_CTYPESPARSER=ON`).
 
-## Build in Docker
+### Use of RetDec Libraries
 
-Docker support is maintained by community. If something does not work for you or if you have suggestions for improvements, open an issue or PR.
+You can easily use various RetDec libraries in your projects if they are built with CMake. RetDec installation contains all the necessary headers, libraries, and CMake scripts.
 
-### Build Image
+If you installed RetDec into a standard installation location of your system (e.g. `/usr`, `/usr/local`), all you need to do in order to use its components is:
+
+```cmake
+find_package(retdec 5.0 REQUIRED
+   COMPONENTS
+      <component>
+      [...]
+)
+target_link_libraries(your-project
+   PUBLIC
+      retdec::<component>
+      [...]
+)
+```
+
+If you did not install RetDec somewhere where it can be automatically discovered, you need to help CMake find it before `find_package()` is used. There are generally two ways to do it (pick and use only one):
+
+1. Add the RetDec installation directory to [`CMAKE_PREFIX_PATH`](https://cmake.org/cmake/help/latest/variable/CMAKE_PREFIX_PATH.html):
+    ```cmake
+    list(APPEND CMAKE_PREFIX_PATH ${RETDEC_INSTALL_DIR})
+    ```
+
+2. Set the path to installed RetDec CMake scripts to `retdec_DIR`:
+    ```cmake
+    set(retdec_DIR ${RETDEC_INSTALL_DIR}/share/retdec/cmake)
+    ```
+
+See the [Repository Overview](https://github.com/avast/retdec/wiki/Repository-Overview) wiki page for the list of available RetDec components, or the [retdec-build-system-tests](https://github.com/avast/retdec-build-system-tests) for demos on how to use them.
+
+### Build in Docker
+
+Docker support is maintained by the community. If something does not work for you or if you have suggestions for improvements, open an issue or PR.
+
+#### Build Image
 
 Building in Docker does not require installation of the required libraries locally. This is a good option for trying out RetDec without setting up the whole build toolchain.
 
-To build the RetDec Docker image, run
-```
+To build the RetDec Docker image from the master branch:
+```bash
 docker build -t retdec - < Dockerfile
 ```
 
-This builds the image from the master branch of this repository.
-
-To build the image using the local copy of the repository, use the development Dockerfile, `Dockerfile.dev`:
-```
+To build the image using the local copy of the repository, use the development Dockerfile:
+```bash
 docker build -t retdec:dev . -f Dockerfile.dev
 ```
 
-### Run Container
+For running containers, see the [Docker](#docker) section under "For Users".
 
-If your `uid` is not 1000, make sure that the directory containing your input binary files is accessible for RetDec:
-```
-chmod 0777 /path/to/local/directory
-```
-Now, you can run the decompiler inside a container:
-```
-docker run --rm -v /path/to/local/directory:/destination retdec retdec-decompiler /destination/binary
-```
-Note: Do not modify the `/destination` part is. You only need to change `/path/to/local/directory`. Output files will then be generated to `/path/to/local/directory`.
+---
 
-## Nightly Builds
+## Resources
 
-We generate up-to-date RetDec packages from the latest commit in the `master` branch in two ways:
-* Using our TeamCity servers
-* Using Github Actions.
+### Project Documentation
 
-The builds are mostly meant to be used by RetDec developers, contributors, and other people experimenting with the product (e.g. testing if an issue present in the official release still exists in the current `master`).
+See the [project documentation](https://retdec-tc.avast.com/repository/download/Retdec_DoxygenBuild/.lastSuccessful/build/doc/doxygen/html/index.html?guest=1) for an up-to-date Doxygen-generated software reference corresponding to the latest commit in the `master` branch.
 
-You can use these as you wish, but keep in mind that there are no guarantees they will work on your system (especially the Linux version), and that regressions are a possibility. To get a stable RetDec version, either download the latest official pre-built package or build the latest RetDec version tag.
-
-**TeamCity**
-
-* [Windows Server 2016, version 10.0](https://retdec-tc.avast.com/repository/download/Retdec_WinBuild/.lastSuccessful/package/retdec-master-windows-64b.7z?guest=1)
-* [Ubuntu Bionic Linux, version 18.04](https://retdec-tc.avast.com/repository/download/RetDec_LinuxBuild/.lastSuccessful/package/retdec-master-linux-64b.tar.xz?guest=1)
-* [Mac OS X, version 10.14.6](https://retdec-tc.avast.com/repository/download/Retdec_MacBuild/.lastSuccessful/package/retdec-master-macos-64b.tar.xz?guest=1)
-
-**Github Actions**
-
-You can find builds for macOS, Linux and Windows in the [latest RetDec CI workflow run](https://github.com/avast/retdec/actions/workflows/retdec-ci.yml).
-
-## Project Documentation
-
-See the [project documentation](https://retdec-tc.avast.com/repository/download/Retdec_DoxygenBuild/.lastSuccessful/build/doc/doxygen/html/index.html?guest=1) for an up to date Doxygen-generated software reference corresponding to the latest commit in the `master` branch.
-
-## Related Repositories
+### Related Repositories
 
 * [retdec-idaplugin](https://github.com/avast/retdec-idaplugin) -- Embeds RetDec into IDA (Interactive Disassembler) and makes its use much easier.
 * [retdec-r2plugin](https://github.com/avast/retdec-r2plugin) -- Embeds RetDec into Radare2 and makes its use much easier.
